@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&amp;family=IBM+Plex+Sans:wght@600;700&amp;display=swap');
+      .title { font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif; font-weight: 700; fill: #F0F1EC; }
+      .sans { font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif; }
+      .mono { font-family: 'IBM Plex Mono', monospace; }
+    </style>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(240,241,236,0.03)" stroke-width="1"/>
+    </pattern>
+    <pattern id="hatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="10" stroke="rgba(255,255,255,0.25)" stroke-width="3" />
+    </pattern>
+    <linearGradient id="cardGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#21252D"/>
+      <stop offset="100%" stop-color="#1A1D24"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#191C22"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+
+  <!-- Border Frame -->
+  <rect x="24" y="24" width="1152" height="582" rx="8" fill="none" stroke="rgba(240,241,236,0.12)" stroke-width="1.5"/>
+
+  <!-- Top Tagline / Eyebrow -->
+  <g transform="translate(70, 85)">
+    <rect x="0" y="0" width="410" height="30" rx="15" fill="rgba(61,59,168,0.3)" stroke="#5E5CE6" stroke-width="1"/>
+    <circle cx="15" cy="15" r="4" fill="#2F6B4F"/>
+    <text x="30" y="20" class="mono" font-size="11" font-weight="600" fill="#E0E2FF" letter-spacing="1.5">1984 FAX COMPRESSION · 100% OFFLINE IN BROWSER</text>
+  </g>
+
+  <!-- Main Headline -->
+  <text x="70" y="170" class="title" font-size="56" letter-spacing="-1">UNDERLIMIT</text>
+  <text x="70" y="215" class="sans" font-size="24" font-weight="500" fill="#B0B5C0">
+    Fit scanned PDFs under upload limits — <tspan fill="#F0F1EC" font-weight="600">no servers, no uploads</tspan>.
+  </text>
+
+  <!-- Sizer Card Mockup -->
+  <g transform="translate(70, 260)">
+    <!-- Card Backing -->
+    <rect width="1060" height="235" rx="6" fill="url(#cardGrad)" stroke="rgba(240,241,236,0.14)" stroke-width="1"/>
+
+    <!-- Console Header Bar -->
+    <rect width="1060" height="42" rx="6" fill="#16181E"/>
+    <line x1="0" y1="42" x2="1060" y2="42" stroke="rgba(240,241,236,0.08)" stroke-width="1"/>
+    <text x="24" y="26" class="mono" font-size="12" font-weight="600" fill="#8E95A2" letter-spacing="1">PORTAL UPLOAD LIMIT: 2.00 MB</text>
+    <text x="920" y="26" class="mono" font-size="11" fill="#6E747E">18-PAGE CONTRACT</text>
+
+    <!-- Rail Grid -->
+    <!-- Row 1: As Sent -->
+    <text x="24" y="90" class="mono" font-size="12" font-weight="600" fill="#8E95A2" letter-spacing="1">AS SENT</text>
+    <rect x="130" y="70" width="700" height="32" rx="2" fill="#2A2E38"/>
+    <!-- Before Bar (overflows limit) -->
+    <rect x="130" y="70" width="670" height="32" rx="2" fill="#A82C3A"/>
+    <rect x="130" y="70" width="670" height="32" rx="2" fill="url(#hatch)"/>
+    <text x="850" y="91" class="mono" font-size="14" font-weight="600" fill="#FF7B88">26.90 MB <tspan font-size="11" fill="#FFA5AE">(×13.5 over)</tspan></text>
+
+    <!-- Row 2: Trimmed -->
+    <text x="24" y="160" class="mono" font-size="12" font-weight="600" fill="#8E95A2" letter-spacing="1">TRIMMED</text>
+    <rect x="130" y="140" width="700" height="32" rx="2" fill="#2A2E38"/>
+    <!-- After Bar (well within limit) -->
+    <rect x="130" y="140" width="160" height="32" rx="2" fill="#2F6B4F"/>
+    <text x="850" y="161" class="mono" font-size="14" font-weight="600" fill="#4ADE80">1.26 MB <tspan font-size="11" fill="#86EFAC">(95% smaller · fits!)</tspan></text>
+
+    <!-- Limit Stop Line -->
+    <!-- Limit is at ~55% of track (x = 130 + 385 = 515) -->
+    <rect x="515" y="55" width="285" height="135" fill="rgba(168,44,58,0.12)"/>
+    <line x1="515" y1="52" x2="515" y2="190" stroke="#F0F1EC" stroke-width="3"/>
+    <rect x="465" y="47" width="100" height="20" rx="3" fill="#F0F1EC"/>
+    <text x="515" y="61" class="mono" font-size="10" font-weight="700" fill="#191C22" text-anchor="middle" letter-spacing="0.5">LIMIT 2.00 MB</text>
+  </g>
+
+  <!-- Feature Badges Bottom Bar -->
+  <g transform="translate(70, 535)">
+    <text x="0" y="24" class="sans" font-size="14" font-weight="600" fill="#F0F1EC">
+      🔒 Zero Data Uploaded <tspan fill="#6E747E" font-weight="400">·</tspan>
+      <tspan dx="12">✈️ Works Air-Gapped with Wi-Fi Off</tspan> <tspan fill="#6E747E" font-weight="400">·</tspan>
+      <tspan dx="12">📦 100% Standalone Single-File Utility</tspan>
+    </text>
+    <text x="1060" y="24" class="mono" font-size="12" fill="#8E95A2" text-anchor="end">github.com/mirceamitu/underlimit</text>
+  </g>
+</svg>

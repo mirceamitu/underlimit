@@ -1,0 +1,23 @@
+{
+  "name": "underlimit",
+  "version": "1.0.0",
+  "description": "Shrink scanned PDFs to fit an upload limit, entirely in the browser.",
+  "homepage": "https://mirceamitu.github.io/underlimit/",
+  "repository": "github:mirceamitu/underlimit",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@fontsource/ibm-plex-sans": "5.3.0",
+    "esbuild": "0.28.2",
+    "pdfjs-dist": "4.10.38"
+  }
+}
