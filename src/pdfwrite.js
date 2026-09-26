@@ -1,5 +1,5 @@
 /**
- * Minimal PDF writer: one full-page image per page and nothing else — no
+ * Minimal PDF writer: one full-page image per page and nothing else, no
  * metadata, fonts or text. Each page keeps the size it came in with.
  *
  * A page is { widthPt, heightPt, pixW, pixH, kind, data, colour? }:

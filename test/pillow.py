@@ -102,7 +102,7 @@ def og(out):
 
     # Headline
     draw.text((70, 125), "UNDERLIMIT", font=font_title, fill=(240, 241, 236))
-    draw.text((70, 195), "Fit scanned PDFs under upload limits — no servers, no uploads.", font=font_sub, fill=(176, 181, 192))
+    draw.text((70, 195), "Fit scanned PDFs under upload limits · no servers, no uploads.", font=font_sub, fill=(176, 181, 192))
 
     # Card
     draw.rounded_rectangle([70, 245, 1130, 500], radius=8, fill=(30, 34, 42), outline=(240, 241, 236, 35))

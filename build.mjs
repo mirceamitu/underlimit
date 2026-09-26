@@ -1,7 +1,7 @@
 /**
  * Builds dist/underlimit.html: one self-contained file that works offline,
- * straight from disk. Everything is inlined — the app, pdf.js (gzipped), the
- * fonts — along with the licences of the third-party parts.
+ * straight from disk. Everything is inlined (the app, pdf.js gzipped, the
+ * fonts), along with the licences of the third-party parts.
  *
  *   npm run build
  */
@@ -42,7 +42,7 @@ const notices = [
 ].map(([name, path]) => `${name}\n\n${read(path).toString().trim()}`);
 if (notices.some((text) => text.includes('-->'))) throw new Error('a licence text would close the header comment');
 const { version, homepage } = JSON.parse(read('package.json'));
-const header = `<!--\nUnderlimit ${version}${homepage ? ` — ${homepage}` : ''}. MIT licence.\n\n`
+const header = `<!--\nUnderlimit ${version}${homepage ? ` · ${homepage}` : ''}. MIT licence.\n\n`
   + `This file includes third-party software under these licences:\n\n`
   + `${notices.join('\n\n----------------------------------------\n\n')}\n-->\n`;
 

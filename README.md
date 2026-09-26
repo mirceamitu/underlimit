@@ -1,10 +1,10 @@
 # Underlimit
 
-> **Never upload contracts, tax forms, or passport scans to random cloud compressors again. Underlimit shrinks scanned PDFs by up to 95% using 1984 fax compression (CCITT Group 4) — running 100% offline in browser JavaScript, with zero network traffic.**
+> **Never upload contracts, tax forms, or passport scans to random cloud compressors again. Underlimit shrinks scanned PDFs by up to 95% using 1984 fax compression (CCITT Group 4), running 100% offline in browser JavaScript, with zero network traffic.**
 
 Government and institutional portals love setting brutal upload caps (2 MB, 5 MB). Meanwhile, modern desktop scanners churn out 30–50 MB multi-page scans full of contracts, IDs, and tax documents.
 
-Popular cloud compressors shave off only 10–20% while exposing your most sensitive identity documents to third-party servers. **Underlimit** solves this by reviving **CCITT Group 4 fax compression** — the 1984 international standard engineered specifically for black text on white paper — implemented directly in client-side JavaScript.
+Popular cloud compressors shave off only 10–20% while exposing your most sensitive identity documents to third-party servers. **Underlimit** solves this by reviving **CCITT Group 4 fax compression** (the 1984 international standard engineered specifically for black text on white paper), implemented directly in client-side JavaScript.
 
 An 18-page, 300 DPI colour scan goes from **26.9 MB to 1.26 MB** (a 95% reduction) at crisp full resolution, with stamps, seals, and signatures preserved.
 
@@ -14,9 +14,9 @@ An 18-page, 300 DPI colour scan goes from **26.9 MB to 1.26 MB** (a 95% reductio
 
 ## 🔒 The Zero-Trust Privacy Guarantee
 
-- **Zero Data Uploaded:** Your PDF is decoded, measured, and encoded entirely inside your local browser memory via JavaScript and HTML5 Canvas. Nothing touches a backend server — ever.
+- **Zero Data Uploaded:** Your PDF is decoded, measured, and encoded entirely inside your local browser memory via JavaScript and HTML5 Canvas. Nothing touches a backend server, ever.
 - **Works with Wi-Fi Disabled:** Download `underlimit.html` (<950 KB), turn off your Wi-Fi, and shrink your files completely air-gapped.
-- **Single-File Lifetime Utility:** The entire tool — application UI, Mozilla's pdf.js engine, IBM Plex typography, and CCITT Group 4 encoder — is bundled into **one self-contained HTML file**. Save it once; run it forever on any computer without installing Node, Python, or plugins.
+- **Single-File Lifetime Utility:** The entire tool (application UI, Mozilla's pdf.js engine, IBM Plex typography, and CCITT Group 4 encoder) is bundled into **one self-contained HTML file**. Save it once; run it forever on any computer without installing Node, Python, or plugins.
 
 ---
 
@@ -55,7 +55,7 @@ And because it all runs in the browser, anyone can do the same: download one HTM
 
 1. **Render.** Each page is rendered once at 300 DPI with [pdf.js](https://github.com/mozilla/pdf.js).
 2. **Sort.** Pages that are ink on paper are told apart from photographs by their colour and how much of them is dark.
-3. **Encode.** Text pages are thresholded to pure black and white — each pixel is compared with the local paper brightness, so uneven lighting doesn't turn into black bands — then compressed with CCITT Group 4, the fax standard, which is several times smaller than JPEG for this kind of page. Photo pages stay JPEG. Each page is encoded at 300, 200 and 150 DPI.
+3. **Encode.** Text pages are thresholded to pure black and white (each pixel is compared with the local paper brightness, so uneven lighting doesn't turn into black bands), then compressed with CCITT Group 4, the fax standard, which is several times smaller than JPEG for this kind of page. Photo pages stay JPEG. Each page is encoded at 300, 200 and 150 DPI.
 4. **Choose.** The best resolution that fits under the limit wins. The sizes shown are exact: they are the byte counts of the file you download. If nothing fits above your resolution floor, it says so and names the DPI that would.
 
 The output keeps every page's size and order, and adds nothing: no metadata, no text layer.
@@ -81,7 +81,7 @@ To see for yourself that nothing leaves your machine, turn off your network befo
 
 It's made for scanned documents: typed pages, forms, stamps, signatures. PDFs created on a computer work too, but come out as images and lose their selectable text (see [Limits](#limits)).
 
-Tested in Chrome and other Chromium browsers. Firefox 113+ and Safari 16.4+ have everything it uses, but haven't been tested yet — reports welcome.
+Tested in Chrome and other Chromium browsers. Firefox 113+ and Safari 16.4+ have everything it uses, but haven't been tested yet (reports welcome).
 
 ## Build
 

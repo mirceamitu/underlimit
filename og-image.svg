@@ -35,7 +35,7 @@
   <!-- Main Headline -->
   <text x="70" y="170" class="title" font-size="56" letter-spacing="-1">UNDERLIMIT</text>
   <text x="70" y="215" class="sans" font-size="24" font-weight="500" fill="#B0B5C0">
-    Fit scanned PDFs under upload limits — <tspan fill="#F0F1EC" font-weight="600">no servers, no uploads</tspan>.
+    Fit scanned PDFs under upload limits · <tspan fill="#F0F1EC" font-weight="600">no servers, no uploads</tspan>.
   </text>
 
   <!-- Sizer Card Mockup -->

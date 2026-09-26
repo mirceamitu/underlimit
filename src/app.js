@@ -1,5 +1,5 @@
 /**
- * Underlimit — fit a scanned PDF under an upload limit, entirely in the page.
+ * Underlimit: fit a scanned PDF under an upload limit, entirely in the page.
  */
 import { buildPdf, pdfSize } from './pdfwrite.js';
 import { RUNGS, drawThresholded, encodePage, inspect, makeCanvas, openPdf, renderPage } from './measure.js';
@@ -40,7 +40,7 @@ async function load(file) {
   try {
     j.doc = await openPdf(new Uint8Array(await file.arrayBuffer()));
   } catch {
-    return fail('This PDF can’t be opened — it may be encrypted or damaged. Try exporting it again.');
+    return fail('This PDF can’t be opened: it may be encrypted or damaged. Try exporting it again.');
   }
   if (stale()) return;
 
@@ -48,7 +48,7 @@ async function load(file) {
   $('fmeta').textContent = plural(n, 'page');
   const thumbs = addThumbs(n);
   for (let i = 0; i < n; i++) {
-    say('Working.', `Page ${i + 1} of ${n} — rendering it, then encoding it to see what it really costs.`);
+    say('Working.', `Page ${i + 1} of ${n}: rendering it, then encoding it to see what it really costs.`);
     try {
       await measure(j, i, 'bw', thumbs[i]);
     } catch (e) {
@@ -141,7 +141,7 @@ function paint() {
   $('barBefore').style.width = sent ? width(sent) : '0';
   $('barBefore').classList.toggle('inside', sent <= (limit * 100) / STOP);
   $('valBefore').classList.toggle('over', !!sent);
-  $('sentSize').textContent = sent ? mb(sent) : '—';
+  $('sentSize').textContent = sent ? mb(sent) : '-';
   $('overBy').textContent = sent > limit ? `×${(sent / limit).toFixed(1)} over` : '';
 
   const choice = job?.ready && choose();
@@ -151,7 +151,7 @@ function paint() {
   $('barAfter').classList.toggle('over', !!choice && !choice.fits);
   if (!choice) {
     $('barAfter').style.width = '0';
-    after.textContent = job ? 'measuring…' : '—';
+    after.textContent = job ? 'measuring…' : '-';
     return;
   }
 
@@ -165,11 +165,11 @@ function paint() {
   $('verdict').classList.toggle('bad', !fits);
   $('btnDl').textContent = fits ? 'Download PDF' : 'Download anyway';
   if (fits) {
-    say(`Fits at ${mb(pick.bytes)}.`, `${capitalise(pick.name)} — the best quality that stays under `
+    say(`Fits at ${mb(pick.bytes)}.`, `${capitalise(pick.name)}: the best quality that stays under `
       + `${settings.limit} MB. ${mb(limit - pick.bytes)} spare, all ${plural(job.pages.length, 'page')}, page size untouched.`);
   } else {
-    say(`Can’t reach ${settings.limit} MB at ${floor} DPI or better.`, `Closest fit is ${mb(pick.bytes)} — ${pick.name}. `
-      + (rescue ? `Dropping to ${rescue.dpi} DPI would land at ${mb(rescue.bytes)} — still readable on screen.`
+    say(`Can’t reach ${settings.limit} MB at ${floor} DPI or better.`, `Closest fit is ${mb(pick.bytes)} (${pick.name}). `
+      + (rescue ? `Dropping to ${rescue.dpi} DPI would land at ${mb(rescue.bytes)}, still readable on screen.`
         : 'Raise the limit, or split the document into two uploads.'));
   }
   $('btnRescue').hidden = !rescue;
@@ -399,7 +399,7 @@ async function createSamplePdf() {
     ctx.rotate(0.003);
 
     drawText(ctx, 'DEPARTMENT OF PUBLIC ADMINISTRATION & ARCHIVES', 130, 140, 'bold 24px monospace', '#111');
-    drawText(ctx, 'STANDARD STATUTORY LEASE AGREEMENT — OFFICIAL FILING', 130, 180, 'bold 18px monospace', '#222');
+    drawText(ctx, 'STANDARD STATUTORY LEASE AGREEMENT - OFFICIAL FILING', 130, 180, 'bold 18px monospace', '#222');
     ctx.strokeStyle = '#222';
     ctx.lineWidth = 2;
     ctx.beginPath();
