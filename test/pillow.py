@@ -3,7 +3,7 @@
     python3 test/pillow.py decode SPEC.json   [{g4, width, height, out}]  G4 stream -> PBM
     python3 test/pillow.py encode SPEC.json   [{pbm, out}]                PBM -> libtiff's G4 stream
     python3 test/pillow.py scan OUT.pgm                                   synthetic 300 DPI A4 scan
-    python3 test/pillow.py jpeg OUT.jpg                                   small greyscale JPEG
+    python3 test/pillow.py jpeg OUT.jpg                                   small grey JPEG, 3 channels
 """
 import io
 import json
@@ -64,7 +64,8 @@ def scan(out):
 
 
 def jpeg(out):
-    Image.linear_gradient('L').resize((64, 48)).save(out, quality=80)
+    # Grey pixels in 3 channels: what canvas.toBlob('image/jpeg') writes.
+    Image.linear_gradient('L').resize((64, 48)).convert('RGB').save(out, quality=80)
 
 
 def og(out):

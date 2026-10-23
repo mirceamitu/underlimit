@@ -64,7 +64,6 @@ async function load(file) {
 
   tally(j);
   j.ready = true;
-  $('btnDl').disabled = false;
   paint();
 
   const inkiest = j.pages.reduce((best, p, i) => (p.look.ink > j.pages[best].look.ink ? i : best), 0);
@@ -145,6 +144,7 @@ function paint() {
   $('overBy').textContent = sent > limit ? `×${(sent / limit).toFixed(1)} over` : '';
 
   const choice = job?.ready && choose();
+  $('btnDl').disabled = !choice; // e.g. greyscale picked but not measured yet
   const after = $('valAfter');
   after.classList.toggle('fits', !!choice?.fits);
   after.classList.toggle('over', !!choice && !choice.fits);
@@ -194,7 +194,6 @@ function showResults(file) {
   $('pgMeta').textContent = $('cmpMeta').textContent = '';
   $('pages').replaceChildren();
   $('verdict').classList.remove('bad');
-  $('btnDl').disabled = true;
   $('btnRescue').hidden = true;
   say('Working.', 'Opening the document.');
   paint();
@@ -211,7 +210,7 @@ function showDrop(message = HINT, error = false) {
   const btn = $('btnSample');
   if (btn) {
     btn.disabled = false;
-    btn.textContent = '⚡ Try 3-page sample scan (2.6 MB → under 2 MB)';
+    btn.textContent = '⚡ Try 3-page sample scan (5.5 MB → under 2 MB)';
   }
   paint();
 }
@@ -352,8 +351,10 @@ compare.addEventListener('pointermove', (e) => { if (compare.hasPointerCapture(e
 
 // --- Sample Document Generation -------------------------------------------
 
+const GRAIN = 24;
+
 async function createSamplePdf() {
-  const W = 1240, H = 1754;
+  const W = 1240, H = 1754, S = 2; // drawn at 150 DPI, rendered at 300 DPI like a real scan
   const pagesData = [];
 
   function drawScanNoise(ctx, w, h) {
@@ -374,6 +375,17 @@ async function createSamplePdf() {
     ctx.fillText(text, x, y);
   }
 
+  // Sensor grain: it is what makes real scans big, and thresholding drops it.
+  function addGrain(canvas) {
+    const ctx = canvas.getContext('2d');
+    const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < img.data.length; i += 4) {
+      const n = (Math.random() - 0.5) * GRAIN;
+      img.data[i] += n; img.data[i + 1] += n; img.data[i + 2] += n;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+
   // Helper to convert canvas to JPEG Uint8Array
   async function canvasToJpegBytes(canvas, quality = 0.85) {
     if (typeof canvas.toBlob === 'function') {
@@ -392,8 +404,9 @@ async function createSamplePdf() {
 
   // Page 1: Official Contract & Stamp
   {
-    const canvas = makeCanvas(W, H);
+    const canvas = makeCanvas(W * S, H * S);
     const ctx = canvas.getContext('2d');
+    ctx.scale(S, S);
     drawScanNoise(ctx, W, H);
     ctx.save();
     ctx.rotate(0.003);
@@ -468,13 +481,15 @@ async function createSamplePdf() {
     drawText(ctx, 'Bureau of Public Records & Attestation', 640, 1005, '13px monospace', '#666');
 
     ctx.restore();
+    addGrain(canvas);
     pagesData.push(await canvasToJpegBytes(canvas, 0.85));
   }
 
   // Page 2: Schedule A Fee Table
   {
-    const canvas = makeCanvas(W, H);
+    const canvas = makeCanvas(W * S, H * S);
     const ctx = canvas.getContext('2d');
+    ctx.scale(S, S);
     drawScanNoise(ctx, W, H);
     ctx.save();
     ctx.rotate(-0.002);
@@ -529,13 +544,15 @@ async function createSamplePdf() {
     });
 
     ctx.restore();
+    addGrain(canvas);
     pagesData.push(await canvasToJpegBytes(canvas, 0.85));
   }
 
   // Page 3: Exhibit B Identity Verification & Photo
   {
-    const canvas = makeCanvas(W, H);
+    const canvas = makeCanvas(W * S, H * S);
     const ctx = canvas.getContext('2d');
+    ctx.scale(S, S);
     drawScanNoise(ctx, W, H);
     ctx.save();
     ctx.rotate(0.002);
@@ -596,16 +613,16 @@ async function createSamplePdf() {
     ctx.restore();
 
     ctx.restore();
+    addGrain(canvas);
     pagesData.push(await canvasToJpegBytes(canvas, 0.85));
   }
 
   const pdfBytes = buildPdf(pagesData.map((data) => ({
     widthPt: 595.28,
     heightPt: 841.89,
-    pixW: W,
-    pixH: H,
+    pixW: W * S,
+    pixH: H * S,
     kind: 'jpeg',
-    colour: true,
     data,
   })));
 

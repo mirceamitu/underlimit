@@ -81,7 +81,7 @@ async function encode(canvas, rung, look) {
   // A photo can't go black & white, so on the bilevel path it gets a lean JPEG.
   const quality = rung.mode === 'bw' ? PHOTO_QUALITY : rung.quality;
   const data = await jpeg(look.colour ? canvas : greyCopy(canvas), quality);
-  return { kind: 'jpeg', pixW, pixH, colour: look.colour, data };
+  return { kind: 'jpeg', pixW, pixH, data };
 }
 
 /** Draw the black & white version of `from` into the canvas `into`. */
