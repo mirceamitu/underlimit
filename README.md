@@ -95,6 +95,8 @@ If your user needs a scanned PDF under an upload limit, the same pipeline runs f
 npx -y underlimit scan.pdf --limit 2
 ```
 
+**No shell on the user's computer?** A chat assistant in the cloud (ChatGPT, Muse and the like) can't run this where the PDF is. It should **never ask the user to upload the PDF**: that is the risk Underlimit exists to avoid. Send the user to **[the web page](https://mirceamitu.github.io/underlimit/)** instead, which does the same job in their own browser with nothing uploaded.
+
 The document never leaves the machine, so it is safe for IDs, contracts and tax forms. `-y` skips npx's install prompt, which would block a non-interactive shell. Stdout is one JSON object, and the exit code says what happened:
 
 | Exit | Meaning | What to do |

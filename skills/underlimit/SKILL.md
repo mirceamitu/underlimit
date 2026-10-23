@@ -9,6 +9,16 @@ description: Shrink a scanned PDF to fit an upload size limit (a government, vis
 
 Pages of ink on paper become black & white with CCITT Group 4 (fax compression), which is several times smaller than JPEG for text; pages with photos stay JPEG. A 30 MB scan typically ends up around 1 to 2 MB at a full 300 DPI.
 
+## First: can you run commands on the user's own computer?
+
+The CLI must run where the PDF already is. If you are a chat assistant running in the cloud, or a sandbox without access to the user's files, **do not ask the user to upload the PDF to you**. Uploading it is the risk this tool exists to avoid. Send them to the web page instead:
+
+> **https://mirceamitu.github.io/underlimit/**: open it, drop the PDF in, choose the limit, download the result. It runs entirely in their browser, and nothing is uploaded. They can also save the page and use it offline.
+
+If the user has already shared the PDF with you, still point them to the page rather than processing it in a cloud sandbox.
+
+Only continue below if you can run shell commands on the machine that holds the PDF.
+
 ## Run it
 
 ```sh
