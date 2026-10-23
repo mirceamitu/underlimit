@@ -83,6 +83,22 @@ It's made for scanned documents: typed pages, forms, stamps, signatures. PDFs cr
 
 Tested in Chrome and other Chromium browsers. Firefox 113+ and Safari 16.4+ have everything it uses, but haven't been tested yet (reports welcome).
 
+### Command line, for AI agents and scripts
+
+The same pipeline runs in Node 20+, with no browser and no network:
+
+```sh
+npx github:mirceamitu/underlimit scan.pdf --limit 2
+```
+
+Pin a tag (`github:mirceamitu/underlimit#v1.1.0`) so behaviour doesn't change between runs. It is built for agents:
+
+- **Stdout is one JSON object**: the output path, its exact size in bytes, the DPI chosen, and the kind of each page (`g4` or `jpeg`). Progress goes to stderr.
+- **Exit codes**: `0` fits, `1` can't fit at `--min-dpi` (the JSON names the DPI that would), `2` error (`{"error": {"code", "message"}}`).
+- **It never writes a file over the limit**, and does nothing if the input already fits (`"alreadyFits": true`).
+- **It warns when a page has selectable text**, which the output, an image of each page, does not keep.
+- `--limit 2` means 2,000,000 bytes. `underlimit --help` has the full contract.
+
 ## Build
 
 ```sh

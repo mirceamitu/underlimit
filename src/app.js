@@ -2,7 +2,7 @@
  * Underlimit: fit a scanned PDF under an upload limit, entirely in the page.
  */
 import { buildPdf, pdfSize } from './pdfwrite.js';
-import { RUNGS, drawThresholded, encodePage, inspect, makeCanvas, openPdf, renderPage } from './measure.js';
+import { RUNGS, choose, drawThresholded, encodePage, inspect, makeCanvas, openPdf, renderPage } from './measure.js';
 import { createSamplePdf } from './sample.js';
 
 const MB = 1e6;          // a portal's "2 MB" is read the strict way, as 2,000,000 bytes
@@ -117,17 +117,11 @@ function tally(j) {
 
 // --- Choosing --------------------------------------------------------------
 
-/** The best measured rung under the limit and DPI floor, or the closest miss. */
-function choose() {
-  const limit = settings.limit * MB, floor = +$('dpi').value;
-  const mode = settings.grey ? 'grey' : 'bw';
-  const rungs = RUNGS.filter((r) => r.mode === mode && job?.sizes[r.id] != null)
-    .map((r) => ({ ...r, bytes: job.sizes[r.id] }));
-  if (!rungs.length) return null;
-  const allowed = rungs.filter((r) => r.dpi >= floor);
-  const pick = allowed.find((r) => r.bytes <= limit) ?? allowed.at(-1) ?? rungs.at(-1);
-  const fits = pick.bytes <= limit;
-  return { pick, fits, floor, rescue: fits ? null : rungs.find((r) => r.bytes <= limit) };
+/** choose() for the current file and controls. */
+function current() {
+  const floor = +$('dpi').value;
+  const choice = choose(job?.sizes ?? {}, settings.limit * MB, floor, settings.grey ? 'grey' : 'bw');
+  return choice && { ...choice, floor };
 }
 
 // --- Drawing ---------------------------------------------------------------
@@ -145,7 +139,7 @@ function paint() {
   $('sentSize').textContent = sent ? mb(sent) : '-';
   $('overBy').textContent = sent > limit ? `×${(sent / limit).toFixed(1)} over` : '';
 
-  const choice = job?.ready && choose();
+  const choice = job?.ready && current();
   $('btnDl').disabled = !choice; // e.g. greyscale picked but not measured yet
   const after = $('valAfter');
   after.classList.toggle('fits', !!choice?.fits);
@@ -272,7 +266,7 @@ function setWipe(fraction) {
 }
 
 function download() {
-  const { pick } = choose();
+  const { pick } = current();
   const bytes = buildPdf(job.pages.map((p) => p.out[pick.id]));
   platform.save(bytes, `${job.file.name.replace(/\.pdf$/i, '')} - under ${settings.limit}MB.pdf`);
 }

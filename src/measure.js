@@ -24,6 +24,21 @@ export const RUNGS = [
   { id: 'g150', mode: 'grey', dpi: 150, quality: 0.75, name: 'greyscale at 150 DPI' },
 ];
 
+/**
+ * The best rung of `mode` that fits `limit` bytes at `floor` DPI or better,
+ * else the closest miss, plus the lower-DPI rung that would fit (`rescue`).
+ * `sizes` is { [rungId]: bytes }; null until a rung of `mode` is measured.
+ */
+export function choose(sizes, limit, floor, mode) {
+  const rungs = RUNGS.filter((r) => r.mode === mode && sizes[r.id] != null)
+    .map((r) => ({ ...r, bytes: sizes[r.id] }));
+  if (!rungs.length) return null;
+  const allowed = rungs.filter((r) => r.dpi >= floor);
+  const pick = allowed.find((r) => r.bytes <= limit) ?? allowed.at(-1) ?? rungs.at(-1);
+  const fits = pick.bytes <= limit;
+  return { pick, fits, rescue: fits ? null : rungs.find((r) => r.bytes <= limit) ?? null };
+}
+
 let pdfjs;
 export async function openPdf(bytes) {
   pdfjs ??= await loadPdfjs();
@@ -95,11 +110,20 @@ export function drawThresholded(from, into) {
   const bits = threshold(toGray(pixels(from)), width, height);
   into.width = width;
   into.height = height;
-  into.getContext('2d').putImageData(greyImage(bits.map((paper) => paper * 255), width, height), 0, 0);
+  putGrey(into, bits.map((paper) => paper * 255));
 }
 
+/** Where canvases and JPEGs come from: the browser's, unless cli.mjs swaps in @napi-rs/canvas. */
+export const canvasApi = {
+  create: () => document.createElement('canvas'),
+  async jpeg(canvas, quality) {
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
+    return new Uint8Array(await blob.arrayBuffer());
+  },
+};
+
 export function makeCanvas(width, height) {
-  const canvas = document.createElement('canvas');
+  const canvas = canvasApi.create();
   canvas.width = Math.max(1, Math.round(width));
   canvas.height = Math.max(1, Math.round(height));
   return canvas;
@@ -118,19 +142,18 @@ function atDpi(canvas, dpi) {
 
 function greyCopy(canvas) {
   const out = makeCanvas(canvas.width, canvas.height);
-  out.getContext('2d').putImageData(greyImage(toGray(pixels(canvas)), out.width, out.height), 0, 0);
+  putGrey(out, toGray(pixels(canvas)));
   return out;
 }
 
-/** One grey level per pixel as opaque ImageData. */
-function greyImage(levels, width, height) {
-  const img = new ImageData(width, height);
-  const px = new Uint32Array(img.data.buffer); // RGBA little-endian: alpha is the top byte
+/** Fill `canvas` with one grey level per pixel, opaque. */
+function putGrey(canvas, levels) {
+  const ctx = canvas.getContext('2d');
+  const img = ctx.createImageData(canvas.width, canvas.height);
+  // RGBA little-endian: alpha is the top byte
+  const px = new Uint32Array(img.data.buffer, img.data.byteOffset, levels.length);
   levels.forEach((v, i) => { px[i] = 0xff000000 | (v * 0x010101); });
-  return img;
+  ctx.putImageData(img, 0, 0);
 }
 
-export async function jpeg(canvas, quality) {
-  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
-  return new Uint8Array(await blob.arrayBuffer());
-}
+export const jpeg = (canvas, quality) => canvasApi.jpeg(canvas, quality);
