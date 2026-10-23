@@ -21,7 +21,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
-      - run: mkdir site && cp dist/underlimit.html site/index.html && cp dist/og-image.* site/ 2>/dev/null || true
+      - run: mkdir site && cp dist/underlimit.html site/index.html && cp dist/og-image.* dist/llms.txt site/ 2>/dev/null || true
       - uses: actions/upload-pages-artifact@v4
         with:
           path: site

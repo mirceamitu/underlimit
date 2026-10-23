@@ -26,3 +26,9 @@ test('dist/underlimit.html is under 950 KB and keeps the third-party licences', 
   assert.ok(html.includes('id="pdfjs-lib"'), 'pdfjs-lib script is inlined');
   assert.ok(html.includes('id="pdfjs-worker"'), 'pdfjs-worker script is inlined');
 });
+
+test('dist/llms.txt is the agent guide without its skill front matter', () => {
+  const llms = read('../dist/llms.txt');
+  assert.match(llms, /^# Underlimit\r?\n/, 'starts with the title, as llms.txt expects');
+  assert.match(llms, /npx -y github:mirceamitu\/underlimit/);
+});

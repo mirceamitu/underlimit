@@ -62,3 +62,6 @@ if (size > 950 * 1024) throw new Error(`dist/underlimit.html exceeded 950 KB lim
 for (const img of ['og-image.svg', 'og-image.png']) {
   copyFileSync(new URL(img, import.meta.url), new URL(`dist/${img}`, import.meta.url));
 }
+// The agent guide, served as /llms.txt: the skill without its front matter.
+writeFileSync(new URL('dist/llms.txt', import.meta.url),
+  read('skills/underlimit/SKILL.md').toString().replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n+/, ''));
