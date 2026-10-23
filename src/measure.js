@@ -7,6 +7,7 @@ import { classify, threshold, toGray } from './image.js';
 
 const BASE_DPI = 300;     // every page is rendered once at this resolution
 const PHOTO_QUALITY = 0.7; // JPEG quality for photo pages on the black & white path
+const MAX_PIXELS = 16e6;   // under iOS Safari's 16.7M-pixel canvas limit; A4 at 300 DPI is 8.7M
 
 /**
  * Treatments, best first within each mode. For a scan of typed paper, black
@@ -44,9 +45,11 @@ async function inlinedModule(id) {
   return URL.createObjectURL(new Blob([js], { type: 'text/javascript' }));
 }
 
-/** Render a page onto a white canvas at `dpi`. */
+/** Render a page onto a white canvas at `dpi`, or less if the page is huge. */
 export async function renderPage(page, dpi = BASE_DPI) {
-  const viewport = page.getViewport({ scale: dpi / 72 });
+  // shortcut: pages over ~A3 render below `dpi`, but the rung names still say 300/200/150 DPI.
+  const { width, height } = page.getViewport({ scale: 1 });
+  const viewport = page.getViewport({ scale: Math.min(dpi / 72, Math.sqrt(MAX_PIXELS / (width * height))) });
   const canvas = makeCanvas(viewport.width, viewport.height);
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   ctx.fillStyle = '#fff';
@@ -56,7 +59,7 @@ export async function renderPage(page, dpi = BASE_DPI) {
 }
 
 /** What a rendered page holds; see classify(). */
-export const inspect = (canvas) => classify(pixels(canvas));
+export const inspect = (canvas) => classify(pixels(canvas), canvas.width);
 
 /**
  * Encode a page rendered at BASE_DPI in every treatment of `mode`.
@@ -66,7 +69,9 @@ export async function encodePage(page, canvas, look, mode) {
   const { width: widthPt, height: heightPt } = page.getViewport({ scale: 1 });
   const out = {};
   for (const rung of RUNGS.filter((r) => r.mode === mode)) {
-    out[rung.id] = { widthPt, heightPt, ...(await encode(atDpi(canvas, rung.dpi), rung, look)) };
+    const scaled = atDpi(canvas, rung.dpi);
+    out[rung.id] = { widthPt, heightPt, ...(await encode(scaled, rung, look)) };
+    if (scaled !== canvas) scaled.width = scaled.height = 0; // free the raster now, not at GC: iOS kills tabs over memory
     await new Promise((r) => setTimeout(r)); // let the page repaint between encodes
   }
   return out;
@@ -125,7 +130,7 @@ function greyImage(levels, width, height) {
   return img;
 }
 
-async function jpeg(canvas, quality) {
+export async function jpeg(canvas, quality) {
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
   return new Uint8Array(await blob.arrayBuffer());
 }

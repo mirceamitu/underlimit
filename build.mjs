@@ -6,8 +6,7 @@
  *   npm run build
  */
 import { build } from 'esbuild';
-import { execFileSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
@@ -60,21 +59,6 @@ const size = statSync(out).size;
 console.log(`dist/underlimit.html  ${(size / 1e6).toFixed(2)} MB`);
 if (size > 950 * 1024) throw new Error(`dist/underlimit.html exceeded 950 KB limit: ${size} bytes`);
 
-const ogPng = new URL('og-image.png', import.meta.url);
-if (!existsSync(ogPng)) {
-  for (const cmd of ['python', 'python3', 'py']) {
-    try {
-      execFileSync(cmd, [fileURLToPath(new URL('test/pillow.py', import.meta.url)), 'og', fileURLToPath(ogPng)], { stdio: 'ignore' });
-      break;
-    } catch {}
-  }
-}
 for (const img of ['og-image.svg', 'og-image.png']) {
-  const src = new URL(img, import.meta.url);
-  if (existsSync(src)) {
-    copyFileSync(src, new URL(`dist/${img}`, import.meta.url));
-  }
+  copyFileSync(new URL(img, import.meta.url), new URL(`dist/${img}`, import.meta.url));
 }
-
-
-

@@ -53,11 +53,11 @@ export function threshold(gray, width, height) {
 
 /**
  * Is this page ink on paper, or continuous tone? Looks at ~40k sampled pixels.
- *   textLike  near-grey and mostly light: safe to send as black & white
+ *   textLike  near-grey, mostly light, no photo in it: safe to send as black & white
  *   colour    enough chroma that a JPEG of it should stay in colour
  *   ink       share of dark pixels, used to pick the most telling page to preview
  */
-export function classify(rgba) {
+export function classify(rgba, width) {
   const n = rgba.length >> 2;
   const step = Math.max(1, Math.floor(n / 40000));
   let chroma = 0, dark = 0, seen = 0;
@@ -68,5 +68,38 @@ export function classify(rgba) {
   }
   chroma /= seen;
   const ink = dark / seen;
-  return { ink, colour: chroma >= 25, textLike: chroma < 14 && ink < 0.4 };
+  const textLike = chroma < 14 && ink < 0.4 && photoShare(rgba, width) < PHOTO_SHARE;
+  return { ink, colour: chroma >= 25, textLike };
+}
+
+const PHOTO_BLOCK = 32;    // 2.7 mm at 300 DPI: wider than any stroke of text
+const PHOTO_SHARE = 0.01;  // an ID card's photo is ~1.2% of an A4 page
+
+/**
+ * Share of the page that is mid-tone with no paper in it, like a photo. Text
+ * never fills a 32×32 block, so its blocks always reach paper brightness;
+ * the threshold would flatten a photo's blocks, since each is its own "paper".
+ * Solid ink and the outer two rings of blocks (scanner edge shadow) don't count.
+ */
+function photoShare(rgba, width) {
+  const height = rgba.length / 4 / width;
+  const bw = Math.ceil(width / PHOTO_BLOCK), bh = Math.ceil(height / PHOTO_BLOCK);
+  const max = new Uint8Array(bw * bh);
+  for (let y = 0, p = 0; y < height; y++) {
+    const row = ((y / PHOTO_BLOCK) | 0) * bw;
+    for (let x = 0; x < width; x++, p += 4) {
+      const i = row + ((x / PHOTO_BLOCK) | 0);
+      const luma = (rgba[p] * 77 + rgba[p + 1] * 151 + rgba[p + 2] * 28) >> 8;
+      if (luma > max[i]) max[i] = luma;
+    }
+  }
+  const paper = max.slice().sort()[Math.floor(max.length * 0.9)];
+  let photo = 0, inner = 0;
+  for (let by = 2; by < bh - 2; by++) {
+    for (let bx = 2; bx < bw - 2; bx++, inner++) {
+      const m = max[by * bw + bx];
+      if (m > 60 && m < paper * 0.8) photo++;
+    }
+  }
+  return inner ? photo / inner : 0;
 }
