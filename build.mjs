@@ -47,10 +47,11 @@ const header = `<!--\nUnderlimit ${version}${homepage ? ` · ${homepage}` : ''}.
 
 // Replacer functions, so a "$&" in the inlined code is not read as a pattern.
 const html = read('src/index.html').toString()
-  .replace('<!DOCTYPE html>\n', () => `<!DOCTYPE html>\n${header}`)
+  .replace(/<!DOCTYPE html>\r?\n/, () => `<!DOCTYPE html>\n${header}`) // CRLF on Windows checkouts
   .replace('<!-- build:fonts -->', () => `<style>${fonts.join('')}</style>`)
   .replace('<!-- build:pdfjs -->', () => pdfjs.join('\n'))
   .replace('<!-- build:app -->', () => `<script type="module">\n${app.text}</script>`);
+if (!html.includes(header)) throw new Error('the licence header was not inserted');
 
 mkdirSync(new URL('dist/', import.meta.url), { recursive: true });
 const out = new URL('dist/underlimit.html', import.meta.url);

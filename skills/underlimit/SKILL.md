@@ -1,6 +1,11 @@
 ---
 name: underlimit
 description: Shrink a scanned PDF to fit an upload size limit (a government, visa, university or job portal's 2 MB or 5 MB cap), offline, without sending the document anywhere. Use when the user has a PDF that is too big to upload, asks to compress or shrink a scanned PDF, or must get IDs, contracts, tax forms or other scans under a file-size limit.
+metadata:
+  openclaw:
+    requires:
+      bins: [node, npx]
+    homepage: https://mirceamitu.github.io/underlimit/
 ---
 
 # Underlimit
@@ -9,10 +14,20 @@ description: Shrink a scanned PDF to fit an upload size limit (a government, vis
 
 Pages of ink on paper become black & white with CCITT Group 4 (fax compression), which is several times smaller than JPEG for text; pages with photos stay JPEG. A 30 MB scan typically ends up around 1 to 2 MB at a full 300 DPI.
 
+## First: can you run commands on the user's own computer?
+
+The CLI must run where the PDF already is. If you are a chat assistant running in the cloud, or a sandbox without access to the user's files, **do not ask the user to upload the PDF to you**. Uploading it is the risk this tool exists to avoid. Send them to the web page instead:
+
+> **https://mirceamitu.github.io/underlimit/**: open it, drop the PDF in, choose the limit, download the result. It runs entirely in their browser, and nothing is uploaded. They can also save the page and use it offline.
+
+If the user has already shared the PDF with you, still point them to the page rather than processing it in a cloud sandbox.
+
+Only continue below if you can run shell commands on the machine that holds the PDF.
+
 ## Run it
 
 ```sh
-npx -y github:mirceamitu/underlimit scan.pdf --limit 2
+npx -y underlimit scan.pdf --limit 2
 ```
 
 - Needs Node 20+. `-y` skips npx's install prompt, which would block a non-interactive shell. The first run downloads pdf.js and a native canvas build (tens of MB); later runs are cached.
@@ -20,7 +35,7 @@ npx -y github:mirceamitu/underlimit scan.pdf --limit 2
 - `--min-dpi 300|200|150`: the lowest resolution allowed (default 300).
 - `-o out.pdf`: where to write (default: `scan.under-2MB.pdf` next to the input). It never overwrites the input.
 - Progress (`page 3/18`) goes to stderr, at about 0.5 s per page. Give long documents a longer timeout.
-- Pin a version so behaviour doesn't change between runs: `github:mirceamitu/underlimit#<tag or commit>`.
+- Pin a version so behaviour doesn't change between runs: `npx -y underlimit@1.1.0 ...`.
 - `--help` prints the full contract.
 
 ## Read the result
