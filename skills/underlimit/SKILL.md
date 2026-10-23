@@ -1,6 +1,11 @@
 ---
 name: underlimit
 description: Shrink a scanned PDF to fit an upload size limit (a government, visa, university or job portal's 2 MB or 5 MB cap), offline, without sending the document anywhere. Use when the user has a PDF that is too big to upload, asks to compress or shrink a scanned PDF, or must get IDs, contracts, tax forms or other scans under a file-size limit.
+metadata:
+  openclaw:
+    requires:
+      bins: [node, npx]
+    homepage: https://mirceamitu.github.io/underlimit/
 ---
 
 # Underlimit
