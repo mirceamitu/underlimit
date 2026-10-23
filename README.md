@@ -8,7 +8,9 @@ Popular cloud compressors shave off only 10–20% while exposing your most sensi
 
 An 18-page, 300 DPI colour scan goes from **26.9 MB to 1.26 MB** (a 95% reduction) at crisp full resolution, with stamps, seals, and signatures preserved.
 
-**[Open Underlimit Live Demo](https://mirceamitu.github.io/underlimit/)** · **[Save Single-File HTML Offline](#offline-on-your-own-computer)**
+**[Open Underlimit Live Demo](https://mirceamitu.github.io/underlimit/)** · **[Save Single-File HTML Offline](#offline-on-your-own-computer)** · **[Command line for AI agents](#-for-ai-agents-the-command-line)**
+
+> **🤖 AI agent?** `npx -y github:mirceamitu/underlimit scan.pdf --limit 2` shrinks a scan under the limit on this machine and answers in JSON. See [the agent guide](skills/underlimit/SKILL.md).
 
 ---
 
@@ -83,21 +85,26 @@ It's made for scanned documents: typed pages, forms, stamps, signatures. PDFs cr
 
 Tested in Chrome and other Chromium browsers. Firefox 113+ and Safari 16.4+ have everything it uses, but haven't been tested yet (reports welcome).
 
-### Command line, for AI agents and scripts
+## 🤖 For AI agents: the command line
 
-The same pipeline runs in Node 20+, with no browser and no network:
+If your user needs a scanned PDF under an upload limit, the same pipeline runs from the command line in Node 20+, with no browser:
 
 ```sh
-npx github:mirceamitu/underlimit scan.pdf --limit 2
+npx -y github:mirceamitu/underlimit scan.pdf --limit 2
 ```
 
-Pin a tag (`github:mirceamitu/underlimit#v1.1.0`) so behaviour doesn't change between runs. It is built for agents:
+The document never leaves the machine, so it is safe for IDs, contracts and tax forms. `-y` skips npx's install prompt, which would block a non-interactive shell. Stdout is one JSON object, and the exit code says what happened:
 
-- **Stdout is one JSON object**: the output path, its exact size in bytes, the DPI chosen, and the kind of each page (`g4` or `jpeg`). Progress goes to stderr.
-- **Exit codes**: `0` fits, `1` can't fit at `--min-dpi` (the JSON names the DPI that would), `2` error (`{"error": {"code", "message"}}`).
-- **It never writes a file over the limit**, and does nothing if the input already fits (`"alreadyFits": true`).
-- **It warns when a page has selectable text**, which the output, an image of each page, does not keep.
-- `--limit 2` means 2,000,000 bytes. `underlimit --help` has the full contract.
+| Exit | Meaning | What to do |
+| :--- | :--- | :--- |
+| `0` | Fits: `output.path` is written, `output.bytes` is its exact size | Upload `output.path`; tell the user about any `warnings` |
+| `0` | `"alreadyFits": true`: the input is already under the limit, nothing written | Upload the original |
+| `1` | Can't fit at `--min-dpi` (default 300), nothing written | Ask the user about `rescue.dpi`, then rerun with `--min-dpi`; if `rescue` is null, split the document |
+| `2` | Error: `{"error": {"code", "message"}}`, nothing written | Act on `error.code`, e.g. `encrypted`: ask for an unprotected copy |
+
+`--limit` is decimal MB (`2` is 2,000,000 bytes). Pages with selectable text are named in `warnings`, because the output is an image of each page. **[The agent guide](skills/underlimit/SKILL.md)** has real JSON for every case and the full decision flow. `underlimit --help` prints the contract too.
+
+**Install it as a skill:** agents that support [Agent Skills](https://agentskills.io) find it on their own. Copy [`skills/underlimit/`](skills/underlimit/) into the agent's skills folder, e.g. `~/.claude/skills/underlimit/` for Claude Code. The hosted page serves the same guide at [`/llms.txt`](https://mirceamitu.github.io/underlimit/llms.txt) for agents that browse.
 
 ## Build
 
