@@ -2,9 +2,9 @@
  * Minimal PDF writer: one full-page image per page and nothing else, no
  * metadata, fonts or text. Each page keeps the size it came in with.
  *
- * A page is { widthPt, heightPt, pixW, pixH, kind, data, colour? }:
+ * A page is { widthPt, heightPt, pixW, pixH, kind, data }:
  *   kind 'g4'    CCITT Group 4, 1 bit per pixel (/CCITTFaxDecode)
- *   kind 'jpeg'  JPEG, grey or colour           (/DCTDecode)
+ *   kind 'jpeg'  JPEG, always 3 channels: browsers write grey as RGB (/DCTDecode)
  */
 
 export const buildPdf = (pages) => concat(layout(pages));
@@ -42,7 +42,7 @@ function layout(pages) {
     const draw = `q ${w} 0 0 ${h} 0 0 cm /Im0 Do Q`;
     const encoding = p.kind === 'g4'
       ? `/ColorSpace /DeviceGray /BitsPerComponent 1 /Filter /CCITTFaxDecode /DecodeParms << /K -1 /Columns ${p.pixW} /Rows ${p.pixH} >>`
-      : `/ColorSpace /Device${p.colour ? 'RGB' : 'Gray'} /BitsPerComponent 8 /Filter /DCTDecode`;
+      : '/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode';
 
     object(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${w} ${h}] `
       + `/Resources << /XObject << /Im0 ${image} 0 R >> >> /Contents ${content} 0 R >>`);

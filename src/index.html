@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Underlimit: fit a scanned PDF under the upload limit</title>
 <meta name="description" content="Fit scanned PDFs under strict upload limits (2 MB, 5 MB, 10 MB) entirely in your browser using 1984 CCITT Group 4 fax compression. 100% private, client-side, zero data uploaded.">
 <link rel="canonical" href="https://mirceamitu.github.io/underlimit/">
@@ -66,7 +66,7 @@ body{
 .wrap{max-width:1040px;margin:0 auto;padding:0 28px}
 
 /* ---------- header ---------- */
-header{border-bottom:1px solid var(--line);background:var(--paper);position:sticky;top:0;z-index:20}
+header{border-bottom:1px solid var(--line);background:var(--paper);position:sticky;top:0;z-index:20;padding-top:env(safe-area-inset-top,0px)}
 .hbar{display:flex;align-items:center;justify-content:space-between;height:56px;gap:16px}
 .mark{display:flex;align-items:baseline;gap:9px}
 .mark b{
@@ -347,7 +347,7 @@ select{
 .how h3{font-size:14.5px;font-weight:600;margin:9px 0 6px;letter-spacing:-.005em}
 .how p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.5}
 .how .step{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--stamp)}
-footer{margin-top:56px;border-top:1px solid var(--line);padding:22px 0 46px}
+footer{margin-top:56px;border-top:1px solid var(--line);padding:22px 0 max(46px,env(safe-area-inset-bottom,0px))}
 .fbar{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
 footer a{color:var(--stamp);text-underline-offset:2px}
 footer p{margin:0;font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;color:var(--graphite);text-transform:uppercase}
@@ -463,7 +463,7 @@ footer p{margin:0;font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;
         <p>or <span class="link">choose a file</span> (scanned documents, any number of pages)</p>
         <div class="sample-act">
           <span class="sample-divider">or test instantly</span>
-          <button type="button" class="btn-sample" id="btnSample" title="Generate a 3-page test scan in memory and process it">⚡ Try 3-page sample scan (2.6 MB → under 2 MB)</button>
+          <button type="button" class="btn-sample" id="btnSample" title="Generate a 3-page test scan in memory and process it">⚡ Try 3-page sample scan (5.5 MB → under 2 MB)</button>
         </div>
       </div>
       <p class="hint label" id="hint">Nothing is uploaded · works offline once loaded</p>

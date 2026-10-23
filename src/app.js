@@ -3,12 +3,14 @@
  */
 import { buildPdf, pdfSize } from './pdfwrite.js';
 import { RUNGS, drawThresholded, encodePage, inspect, makeCanvas, openPdf, renderPage } from './measure.js';
+import { createSamplePdf } from './sample.js';
 
 const MB = 1e6;          // a portal's "2 MB" is read the strict way, as 2,000,000 bytes
 const STOP = 62;         // where the limit line sits on the sizer, in % of the track
 const THUMB_HEIGHT = 147;
 const PREVIEW = { dpi: 200, width: 0.86, top: 0.42, aspect: 470 / 1920 }; // legibility band
 const HINT = 'Nothing is uploaded · works offline once loaded';
+const SAMPLE_LABEL = document.getElementById('btnSample').textContent;
 
 const $ = (id) => document.getElementById(id);
 const mb = (bytes) => `${(bytes / MB).toFixed(2)} MB`;
@@ -23,12 +25,10 @@ const settings = { limit: 2, grey: false };
  *   sizes  { [rungId]: exact output bytes }, once every page has that rung
  */
 let job = null;
-let sampleGenToken = 0;
 
 // --- Measuring -------------------------------------------------------------
 
-async function load(file) {
-  sampleGenToken++;
+export async function load(file) {
   if (!/\.pdf$/i.test(file.name) && file.type !== 'application/pdf') {
     return showDrop('That isn’t a PDF. Choose a PDF and it will be measured here.', true);
   }
@@ -64,7 +64,6 @@ async function load(file) {
 
   tally(j);
   j.ready = true;
-  $('btnDl').disabled = false;
   paint();
 
   const inkiest = j.pages.reduce((best, p, i) => (p.look.ink > j.pages[best].look.ink ? i : best), 0);
@@ -75,12 +74,14 @@ async function load(file) {
 /** Render page `i` once and add the encodings of every `mode` rung to it. */
 async function measure(j, i, mode, thumb) {
   const page = await j.doc.getPage(i + 1);
+  let canvas;
   try {
-    const canvas = await renderPage(page);
+    canvas = await renderPage(page);
     if (thumb) drawThumb(canvas, thumb);
     const entry = j.pages[i] ??= { look: inspect(canvas), out: {} };
     Object.assign(entry.out, await encodePage(page, canvas, entry.look, mode));
   } finally {
+    if (canvas) canvas.width = canvas.height = 0; // free the 35 MB raster now
     page.cleanup();
   }
 }
@@ -145,6 +146,7 @@ function paint() {
   $('overBy').textContent = sent > limit ? `×${(sent / limit).toFixed(1)} over` : '';
 
   const choice = job?.ready && choose();
+  $('btnDl').disabled = !choice; // e.g. greyscale picked but not measured yet
   const after = $('valAfter');
   after.classList.toggle('fits', !!choice?.fits);
   after.classList.toggle('over', !!choice && !choice.fits);
@@ -163,7 +165,7 @@ function paint() {
   });
 
   $('verdict').classList.toggle('bad', !fits);
-  $('btnDl').textContent = fits ? 'Download PDF' : 'Download anyway';
+  $('btnDl').textContent = `${platform.verb} ${fits ? 'PDF' : 'anyway'}`;
   if (fits) {
     say(`Fits at ${mb(pick.bytes)}.`, `${capitalise(pick.name)}: the best quality that stays under `
       + `${settings.limit} MB. ${mb(limit - pick.bytes)} spare, all ${plural(job.pages.length, 'page')}, page size untouched.`);
@@ -194,25 +196,20 @@ function showResults(file) {
   $('pgMeta').textContent = $('cmpMeta').textContent = '';
   $('pages').replaceChildren();
   $('verdict').classList.remove('bad');
-  $('btnDl').disabled = true;
   $('btnRescue').hidden = true;
   say('Working.', 'Opening the document.');
   paint();
 }
 
-function showDrop(message = HINT, error = false) {
-  sampleGenToken++;
+export function showDrop(message = HINT, error = false) {
   job = null;
   $('results').hidden = true;
   $('dropWrap').hidden = false;
   $('hint').textContent = message;
   $('hint').classList.toggle('error', error);
   $('file').value = '';
-  const btn = $('btnSample');
-  if (btn) {
-    btn.disabled = false;
-    btn.textContent = '⚡ Try 3-page sample scan (2.6 MB → under 2 MB)';
-  }
+  $('btnSample').disabled = false;
+  $('btnSample').textContent = SAMPLE_LABEL;
   paint();
 }
 
@@ -277,13 +274,21 @@ function setWipe(fraction) {
 function download() {
   const { pick } = choose();
   const bytes = buildPdf(job.pages.map((p) => p.out[pick.id]));
-  const link = Object.assign(document.createElement('a'), {
-    href: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })),
-    download: `${job.file.name.replace(/\.pdf$/i, '')} - under ${settings.limit}MB.pdf`,
-  });
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(link.href), 4000);
+  platform.save(bytes, `${job.file.name.replace(/\.pdf$/i, '')} - under ${settings.limit}MB.pdf`);
 }
+
+/** What differs in the mobile app, which swaps these out (underlimit-mobile/src/main.js). */
+export const platform = {
+  verb: 'Download',
+  save(bytes, name) {
+    const link = Object.assign(document.createElement('a'), {
+      href: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })),
+      download: name,
+    });
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 4000);
+  },
+};
 
 // --- Controls --------------------------------------------------------------
 
@@ -330,11 +335,9 @@ drop.addEventListener('dragleave', (e) => {
 drop.addEventListener('drop', (e) => {
   e.preventDefault();
   drop.classList.remove('hot');
-  sampleGenToken++;
   if (e.dataTransfer.files[0]) load(e.dataTransfer.files[0]);
 });
 $('file').addEventListener('change', (e) => {
-  sampleGenToken++;
   if (e.target.files[0]) load(e.target.files[0]);
 });
 
@@ -350,303 +353,22 @@ const wipeTo = (x) => { const r = compare.getBoundingClientRect(); setWipe((x - 
 compare.addEventListener('pointerdown', (e) => { compare.setPointerCapture(e.pointerId); wipeTo(e.clientX); });
 compare.addEventListener('pointermove', (e) => { if (compare.hasPointerCapture(e.pointerId)) wipeTo(e.clientX); });
 
-// --- Sample Document Generation -------------------------------------------
-
-async function createSamplePdf() {
-  const W = 1240, H = 1754;
-  const pagesData = [];
-
-  function drawScanNoise(ctx, w, h) {
-    const grad = ctx.createLinearGradient(0, 0, w, h);
-    grad.addColorStop(0, '#fbfbfa');
-    grad.addColorStop(0.5, '#f3f4ee');
-    grad.addColorStop(1, '#e8ebe1');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = 'rgba(0,0,0,0.03)';
-    ctx.fillRect(0, 0, 16, h);
-    ctx.fillRect(w - 16, 0, 16, h);
-  }
-
-  function drawText(ctx, text, x, y, font = '18px monospace', fill = '#1a1c20') {
-    ctx.font = font;
-    ctx.fillStyle = fill;
-    ctx.fillText(text, x, y);
-  }
-
-  // Helper to convert canvas to JPEG Uint8Array
-  async function canvasToJpegBytes(canvas, quality = 0.85) {
-    if (typeof canvas.toBlob === 'function') {
-      try {
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
-        if (blob) return new Uint8Array(await blob.arrayBuffer());
-      } catch {}
-    }
-    const dataUrl = canvas.toDataURL('image/jpeg', quality);
-    const comma = dataUrl.indexOf(',');
-    const bin = atob(comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl);
-    const bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    return bytes;
-  }
-
-  // Page 1: Official Contract & Stamp
-  {
-    const canvas = makeCanvas(W, H);
-    const ctx = canvas.getContext('2d');
-    drawScanNoise(ctx, W, H);
-    ctx.save();
-    ctx.rotate(0.003);
-
-    drawText(ctx, 'DEPARTMENT OF PUBLIC ADMINISTRATION & ARCHIVES', 130, 140, 'bold 24px monospace', '#111');
-    drawText(ctx, 'STANDARD STATUTORY LEASE AGREEMENT - OFFICIAL FILING', 130, 180, 'bold 18px monospace', '#222');
-    ctx.strokeStyle = '#222';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(130, 205);
-    ctx.lineTo(1110, 205);
-    ctx.stroke();
-
-    drawText(ctx, 'Document Ref: DPA-2026-0984-G4       Filing Date: 24 September 2026', 130, 245, '15px monospace', '#444');
-    drawText(ctx, 'Submission Category: Required Public Archival Scan', 130, 275, '15px monospace', '#444');
-
-    const clauses = [
-      '1. PURPOSE AND JURISDICTION: This instrument constitutes a formal public submission',
-      'under municipal governance regulations requiring verification of tenancy and verified',
-      'identity credentials for electronic administrative archival purposes.',
-      '',
-      '2. STATUTORY ATTESTATION: The applicant acknowledges that submitting illegible or',
-      'falsified documentation carries administrative sanctions and filing rejections under',
-      'statutory regulatory procedural codes section 44-B.',
-      '',
-      '3. SCANNING COMPLIANCE: All uploaded digital scans must preserve official rubber',
-      'stamps, department seals, counter-signatures, and alphanumeric serial markings',
-      'without destructive lossy artifacts obscuring registration records.',
-      '',
-      '4. IN WITNESS WHEREOF, the undersigned parties have executed this certified filing',
-      'as of the date entered below, subject to audit and verification by the registrar.',
-    ];
-    let y = 350;
-    for (const line of clauses) {
-      if (line) drawText(ctx, line, 130, y, '16px monospace', '#1a1c22');
-      y += 32;
-    }
-
-    // Official Seal Stamp
-    ctx.save();
-    ctx.translate(340, 940);
-    ctx.rotate(-0.08);
-    ctx.strokeStyle = '#263a8a';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(0, 0, 90, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(0, 0, 80, 0, Math.PI * 2);
-    ctx.stroke();
-    drawText(ctx, '★ OFFICIAL SEAL ★', -68, -25, 'bold 13px sans-serif', '#263a8a');
-    drawText(ctx, 'STATE REGISTRY', -62, 5, 'bold 15px sans-serif', '#263a8a');
-    drawText(ctx, 'APPROVED 2026', -54, 32, 'bold 13px sans-serif', '#263a8a');
-    ctx.restore();
-
-    // Signature Block
-    drawText(ctx, 'Certified Registrar Signature:', 640, 910, '15px monospace', '#444');
-    ctx.strokeStyle = '#444';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(640, 980);
-    ctx.lineTo(1050, 980);
-    ctx.stroke();
-    ctx.strokeStyle = '#0e1d54';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(660, 970);
-    ctx.bezierCurveTo(710, 920, 740, 1000, 810, 940);
-    ctx.bezierCurveTo(860, 910, 900, 960, 970, 950);
-    ctx.bezierCurveTo(1000, 950, 1010, 930, 1035, 965);
-    ctx.stroke();
-    drawText(ctx, 'Bureau of Public Records & Attestation', 640, 1005, '13px monospace', '#666');
-
-    ctx.restore();
-    pagesData.push(await canvasToJpegBytes(canvas, 0.85));
-  }
-
-  // Page 2: Schedule A Fee Table
-  {
-    const canvas = makeCanvas(W, H);
-    const ctx = canvas.getContext('2d');
-    drawScanNoise(ctx, W, H);
-    ctx.save();
-    ctx.rotate(-0.002);
-
-    drawText(ctx, 'SCHEDULE A: FEE STRUCTURE & RECONCILIATION SUMMARY', 130, 140, 'bold 22px monospace', '#111');
-    drawText(ctx, 'All monetary assessments calculated under Municipal Administrative Directive 12.', 130, 175, '15px monospace', '#444');
-
-    const top = 230, rowH = 44;
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 1.5;
-    for (let r = 0; r <= 13; r++) {
-      ctx.beginPath();
-      ctx.moveTo(130, top + r * rowH);
-      ctx.lineTo(1110, top + r * rowH);
-      ctx.stroke();
-    }
-    const cols = [130, 240, 680, 890, 1110];
-    for (const c of cols) {
-      ctx.beginPath();
-      ctx.moveTo(c, top);
-      ctx.lineTo(c, top + 13 * rowH);
-      ctx.stroke();
-    }
-    drawText(ctx, 'ITEM #', 148, top + 28, 'bold 15px monospace', '#111');
-    drawText(ctx, 'STATUTORY DESCRIPTION', 260, top + 28, 'bold 15px monospace', '#111');
-    drawText(ctx, 'CODE REF', 710, top + 28, 'bold 15px monospace', '#111');
-    drawText(ctx, 'ASSESSMENT', 920, top + 28, 'bold 15px monospace', '#111');
-
-    const items = [
-      ['001', 'Physical Document Processing and Stamp Verification', 'SEC-01', '$145.00'],
-      ['002', 'Biometric Signature Validation and Identity Confirmation', 'SEC-04', '$210.00'],
-      ['003', 'Public Register Landlord Registry Fee (Zone B)', 'MUN-88', '$520.00'],
-      ['004', 'Environmental Impact Statement Archival Filing', 'ENV-12', '$85.00'],
-      ['005', 'Commercial Tenancy Protection Fund Contribution', 'PROT-9', '$330.00'],
-      ['006', 'Expedited Counter Filing & Electronic Audit Pass', 'AUD-02', '$75.00'],
-      ['007', 'Inter-Agency Notice Transmission Surcharge', 'NOT-55', '$42.50'],
-      ['008', 'Regional Infrastructure Maintenance Assessment', 'INF-10', '$190.00'],
-      ['009', 'Annual Registry Maintenance and Seal Renewal', 'REG-01', '$120.00'],
-      ['010', 'Digital Retention Guarantee (10-Year Safe Storage)', 'STOR-7', '$95.00'],
-      ['011', 'Administrative Notarial Certification & Tax Stamp', 'NOT-01', '$60.00'],
-      ['TOT', 'FINAL CERTIFIED BALANCE DUE TO MUNICIPALITY', 'ALL-OK', '$1,872.50'],
-    ];
-
-    items.forEach((row, i) => {
-      const y = top + (i + 1) * rowH + 28;
-      const isBold = i === items.length - 1;
-      const fn = isBold ? 'bold 15px monospace' : '15px monospace';
-      drawText(ctx, row[0], 152, y, fn, '#222');
-      drawText(ctx, row[1], 260, y, fn, '#222');
-      drawText(ctx, row[2], 710, y, fn, '#222');
-      drawText(ctx, row[3], 930, y, fn, '#222');
-    });
-
-    ctx.restore();
-    pagesData.push(await canvasToJpegBytes(canvas, 0.85));
-  }
-
-  // Page 3: Exhibit B Identity Verification & Photo
-  {
-    const canvas = makeCanvas(W, H);
-    const ctx = canvas.getContext('2d');
-    drawScanNoise(ctx, W, H);
-    ctx.save();
-    ctx.rotate(0.002);
-
-    drawText(ctx, 'EXHIBIT B: APPLICANT IDENTITY & BIOMETRIC VERIFICATION', 130, 140, 'bold 22px monospace', '#111');
-    drawText(ctx, 'Attach passport-style photograph and primary identification credential.', 130, 175, '15px monospace', '#444');
-
-    // Photo Box
-    ctx.strokeStyle = '#333';
-    ctx.strokeRect(130, 230, 280, 360);
-    const gradPhoto = ctx.createLinearGradient(130, 230, 410, 590);
-    gradPhoto.addColorStop(0, '#537895');
-    gradPhoto.addColorStop(1, '#09203f');
-    ctx.fillStyle = gradPhoto;
-    ctx.fillRect(131, 231, 278, 358);
-    // Silhouette
-    ctx.fillStyle = '#e0ac69';
-    ctx.beginPath();
-    ctx.arc(270, 370, 60, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#2c3e50';
-    ctx.beginPath();
-    ctx.ellipse(270, 510, 110, 80, 0, 0, Math.PI);
-    ctx.fill();
-    drawText(ctx, 'GOVERNMENT ID PHOTO', 170, 570, 'bold 12px sans-serif', '#fff');
-
-    const fields = [
-      ['SURNAME:', 'MITCHELL'],
-      ['GIVEN NAMES:', 'ALEXANDER DANIEL'],
-      ['NATIONALITY:', 'CITIZEN OF RECORD'],
-      ['DATE OF BIRTH:', '14 MAY 1984'],
-      ['ISSUING AUTHORITY:', 'STATE CIVIL REGISTRY'],
-      ['EXPIRY DATE:', '31 DEC 2034'],
-      ['DOCUMENT NO:', 'A-84920491-CCITT'],
-    ];
-    fields.forEach(([k, v], idx) => {
-      drawText(ctx, k, 450, 260 + idx * 48, 'bold 14px monospace', '#444');
-      drawText(ctx, v, 650, 260 + idx * 48, '16px monospace', '#111');
-    });
-
-    drawText(ctx, 'DECLARATION OF ACCURACY AND OFFICIAL ENDORSEMENT', 130, 670, 'bold 17px monospace', '#111');
-    const decl = [
-      'I hereby certify under penalty of perjury that the attached photographic',
-      'identification and credentials correspond truthfully to the applicant named',
-      'herein, verified by an accredited municipal recording officer.',
-    ];
-    decl.forEach((l, idx) => drawText(ctx, l, 130, 710 + idx * 30, '15px monospace', '#222'));
-
-    // Red Stamp
-    ctx.save();
-    ctx.translate(850, 910);
-    ctx.rotate(0.06);
-    ctx.strokeStyle = '#a82c3a';
-    ctx.lineWidth = 3.5;
-    ctx.strokeRect(-120, -45, 240, 90);
-    drawText(ctx, 'VERIFIED & RECORDED', -105, -10, 'bold 16px sans-serif', '#a82c3a');
-    drawText(ctx, 'ARCHIVE COMPLIANT', -95, 22, 'bold 14px sans-serif', '#a82c3a');
-    ctx.restore();
-
-    ctx.restore();
-    pagesData.push(await canvasToJpegBytes(canvas, 0.85));
-  }
-
-  const pdfBytes = buildPdf(pagesData.map((data) => ({
-    widthPt: 595.28,
-    heightPt: 841.89,
-    pixW: W,
-    pixH: H,
-    kind: 'jpeg',
-    colour: true,
-    data,
-  })));
-
+$('btnSample').addEventListener('click', async (e) => {
+  e.stopPropagation(); // the button sits inside the drop zone, which opens the file picker
+  const btn = e.currentTarget, before = job;
+  btn.disabled = true;
+  btn.textContent = 'Generating sample scan…';
   try {
-    return new File([pdfBytes], 'sample-scanned-contract.pdf', { type: 'application/pdf' });
-  } catch {
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-    blob.name = 'sample-scanned-contract.pdf';
-    return blob;
+    const file = await createSamplePdf();
+    if (job === before) await load(file); // unless a file was dropped meanwhile
+  } catch (err) {
+    console.error(err);
+    if (job === before) showDrop(`Could not create sample PDF. ${err?.message ?? ''}`, true);
   }
-}
-
-const btnSample = $('btnSample');
-if (btnSample) {
-  btnSample.addEventListener('click', async (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (btnSample.disabled) return;
-    const orig = btnSample.textContent;
-    btnSample.disabled = true;
-    btnSample.textContent = 'Generating sample scan…';
-    const currentToken = ++sampleGenToken;
-    try {
-      const sampleFile = await createSamplePdf();
-      if (currentToken !== sampleGenToken) return;
-      await load(sampleFile);
-    } catch (err) {
-      if (currentToken !== sampleGenToken) return;
-      console.error(err);
-      showDrop('Could not create sample PDF. ' + (err?.message ?? ''), true);
-    } finally {
-      if (currentToken === sampleGenToken) {
-        btnSample.disabled = false;
-        btnSample.textContent = orig;
-      }
-    }
-  });
-  btnSample.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') e.stopPropagation();
-  });
-}
+});
+$('btnSample').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') e.stopPropagation();
+});
 
 // Offer the page itself as a download, unless this already is a saved copy.
 if (location.protocol === 'file:') $('saveCopy').remove();

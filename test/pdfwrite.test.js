@@ -44,7 +44,7 @@ test('writes a PDF poppler reads back page for page', (t) => {
   const list = run('pdfimages', '-list', path).split('\n').slice(2).filter(Boolean).map((l) => l.trim().split(/\s+/));
   assert.deepEqual(list.map((c) => [c[3], c[4], c[5], c[7], c[8]]), [
     ['200', '100', 'gray', '1', 'ccitt'],
-    ['64', '48', 'gray', '8', 'jpeg'],
+    ['64', '48', 'rgb', '8', 'jpeg'],
   ]);
 
   run('pdfimages', '-all', path, join(dir, 'raw'));
@@ -64,7 +64,6 @@ test('builds multi-page sample documents matching synthetic scan structure', () 
     pixW: 1240,
     pixH: 1754,
     kind: 'jpeg',
-    colour: true,
     data: jpeg,
   }));
   const pdf = buildPdf(pages);

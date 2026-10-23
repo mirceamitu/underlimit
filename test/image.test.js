@@ -36,10 +36,26 @@ test('threshold keeps unevenly lit paper white and keeps the ink', () => {
 
 test('classify tells text from photographs and colour from grey', () => {
   const r = random(3);
-  const text = classify(rgba(40000, (i) => (i % 97 < 6 ? [30, 30, 30] : [240, 238, 236])));
-  const photo = classify(rgba(40000, () => { const v = r() * 255; return [v, v, v]; }));
-  const colour = classify(rgba(40000, (i) => (i % 2 ? [200, 60, 40] : [40, 90, 200])));
+  const text = classify(rgba(40000, (i) => (i % 97 < 6 ? [30, 30, 30] : [240, 238, 236])), 200);
+  const photo = classify(rgba(40000, () => { const v = r() * 255; return [v, v, v]; }), 200);
+  const colour = classify(rgba(40000, (i) => (i % 2 ? [200, 60, 40] : [40, 90, 200])), 200);
   assert.deepEqual([text.textLike, text.colour], [true, false]);
   assert.equal(photo.textLike, false);
   assert.deepEqual([colour.textLike, colour.colour], [false, true]);
+});
+
+test('classify keeps a text page with an ID photo out of black & white', () => {
+  // A 1240×1754 page (A4 at 150 DPI) of typed lines, a dark scanner edge,
+  // and optionally a passport-sized grey photo.
+  const W = 1240, H = 1754;
+  const page = (withPhoto) => rgba(W * H, (i) => {
+    const x = i % W, y = (i / W) | 0;
+    if (x < 30 || y < 30 || x >= W - 30 || y >= H - 30) return [90, 90, 90];
+    if (withPhoto && x >= 130 && x < 337 && y >= 230 && y < 496) {
+      const v = 70 + ((x + y) % 80); return [v, v, v];
+    }
+    return y % 24 < 3 && x % 9 < 6 ? [30, 30, 30] : [240, 238, 236];
+  });
+  assert.equal(classify(page(false), W).textLike, true, 'text with a dark edge is still text');
+  assert.equal(classify(page(true), W).textLike, false, 'a photo on the page keeps it out of black & white');
 });
