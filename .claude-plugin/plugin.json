@@ -1,0 +1,10 @@
+{
+  "name": "underlimit",
+  "displayName": "Underlimit",
+  "description": "Shrink a scanned PDF under an upload limit (a portal's 2 MB or 5 MB cap), offline: the document never leaves the machine.",
+  "author": { "name": "Mircea Mitu" },
+  "homepage": "https://mirceamitu.github.io/underlimit/",
+  "repository": "https://github.com/mirceamitu/underlimit",
+  "license": "MIT",
+  "keywords": ["pdf", "compress", "scan", "upload-limit", "offline", "ccitt", "fax"]
+}

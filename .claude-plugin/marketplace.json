@@ -1,0 +1,11 @@
+{
+  "name": "underlimit",
+  "owner": { "name": "Mircea Mitu" },
+  "plugins": [
+    {
+      "name": "underlimit",
+      "source": "./",
+      "description": "Shrink a scanned PDF under an upload limit, offline. Adds the underlimit skill."
+    }
+  ]
+}

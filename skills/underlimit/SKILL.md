@@ -12,7 +12,7 @@ Pages of ink on paper become black & white with CCITT Group 4 (fax compression),
 ## Run it
 
 ```sh
-npx -y github:mirceamitu/underlimit scan.pdf --limit 2
+npx -y underlimit scan.pdf --limit 2
 ```
 
 - Needs Node 20+. `-y` skips npx's install prompt, which would block a non-interactive shell. The first run downloads pdf.js and a native canvas build (tens of MB); later runs are cached.
@@ -20,7 +20,7 @@ npx -y github:mirceamitu/underlimit scan.pdf --limit 2
 - `--min-dpi 300|200|150`: the lowest resolution allowed (default 300).
 - `-o out.pdf`: where to write (default: `scan.under-2MB.pdf` next to the input). It never overwrites the input.
 - Progress (`page 3/18`) goes to stderr, at about 0.5 s per page. Give long documents a longer timeout.
-- Pin a version so behaviour doesn't change between runs: `github:mirceamitu/underlimit#<tag or commit>`.
+- Pin a version so behaviour doesn't change between runs: `npx -y underlimit@1.1.0 ...`.
 - `--help` prints the full contract.
 
 ## Read the result

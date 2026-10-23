@@ -1,5 +1,7 @@
 # Underlimit
 
+[![skills.sh](https://skills.sh/b/mirceamitu/underlimit)](https://skills.sh/mirceamitu/underlimit)
+
 > **Never upload contracts, tax forms, or passport scans to random cloud compressors again. Underlimit shrinks scanned PDFs by up to 95% using 1984 fax compression (CCITT Group 4), running 100% offline in browser JavaScript, with zero network traffic.**
 
 Government and institutional portals love setting brutal upload caps (2 MB, 5 MB). Meanwhile, modern desktop scanners churn out 30–50 MB multi-page scans full of contracts, IDs, and tax documents.
@@ -10,7 +12,7 @@ An 18-page, 300 DPI colour scan goes from **26.9 MB to 1.26 MB** (a 95% reductio
 
 **[Open Underlimit Live Demo](https://mirceamitu.github.io/underlimit/)** · **[Save Single-File HTML Offline](#offline-on-your-own-computer)** · **[Command line for AI agents](#-for-ai-agents-the-command-line)**
 
-> **🤖 AI agent?** `npx -y github:mirceamitu/underlimit scan.pdf --limit 2` shrinks a scan under the limit on this machine and answers in JSON. See [the agent guide](skills/underlimit/SKILL.md).
+> **🤖 AI agent?** `npx -y underlimit scan.pdf --limit 2` shrinks a scan under the limit on this machine and answers in JSON. See [the agent guide](skills/underlimit/SKILL.md).
 
 ---
 
@@ -90,7 +92,7 @@ Tested in Chrome and other Chromium browsers. Firefox 113+ and Safari 16.4+ have
 If your user needs a scanned PDF under an upload limit, the same pipeline runs from the command line in Node 20+, with no browser:
 
 ```sh
-npx -y github:mirceamitu/underlimit scan.pdf --limit 2
+npx -y underlimit scan.pdf --limit 2
 ```
 
 The document never leaves the machine, so it is safe for IDs, contracts and tax forms. `-y` skips npx's install prompt, which would block a non-interactive shell. Stdout is one JSON object, and the exit code says what happened:
@@ -104,7 +106,20 @@ The document never leaves the machine, so it is safe for IDs, contracts and tax 
 
 `--limit` is decimal MB (`2` is 2,000,000 bytes). Pages with selectable text are named in `warnings`, because the output is an image of each page. **[The agent guide](skills/underlimit/SKILL.md)** has real JSON for every case and the full decision flow. `underlimit --help` prints the contract too.
 
-**Install it as a skill:** agents that support [Agent Skills](https://agentskills.io) find it on their own. Copy [`skills/underlimit/`](skills/underlimit/) into the agent's skills folder, e.g. `~/.claude/skills/underlimit/` for Claude Code. The hosted page serves the same guide at [`/llms.txt`](https://mirceamitu.github.io/underlimit/llms.txt) for agents that browse.
+Pin a version so behaviour doesn't change between runs: `npx -y underlimit@1.1.0`. Without npm, `npx -y github:mirceamitu/underlimit` runs straight from this repository.
+
+### Install it as a skill
+
+With the skill installed, an agent that supports [Agent Skills](https://agentskills.io) finds Underlimit on its own when a PDF is too big to upload.
+
+| Agent | Install |
+| :--- | :--- |
+| Any agent, via [skills.sh](https://skills.sh/mirceamitu/underlimit) | `npx skills add mirceamitu/underlimit` |
+| Claude Code, as a plugin | `claude plugin install underlimit --marketplace mirceamitu/underlimit`, or in a session: `/plugin marketplace add mirceamitu/underlimit` then `/plugin install underlimit@underlimit` |
+| OpenAI Codex | `$skill-installer install https://github.com/mirceamitu/underlimit/tree/main/skills/underlimit` |
+| Anything else | Copy [`skills/underlimit/`](skills/underlimit/) into the agent's skills folder, e.g. `~/.claude/skills/underlimit/` |
+
+Agents that browse can read the same guide at [`/llms.txt`](https://mirceamitu.github.io/underlimit/llms.txt) on the hosted page.
 
 ## Build
 
